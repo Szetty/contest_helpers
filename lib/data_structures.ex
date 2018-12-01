@@ -51,6 +51,8 @@ defmodule Helpers do
     end
   end
 
+  def p(any), do: IO.puts(inspect(any))
+
   defp internal_mean(enumerable), do: enumerable |> Enum.sum |> Kernel./(Enum.count(enumerable))
 
   defp parse_float(x) do
@@ -740,15 +742,15 @@ end
 
 defmodule Reader do
 
-  def from_file(filename, opts \\ []) do
-    filename |> File.open! |> from_device(opts)
+  def f(filename, opts \\ []) do
+    filename |> File.open! |> device(opts)
   end
 
-  def from_device(device, opts \\ []) do
-    device |> IO.read(:all) |> from_string(opts)
+  def device(device, opts \\ []) do
+    device |> IO.read(:all) |> string(opts)
   end
 
-  def from_string(string, opts \\ []) do
+  def string(string, opts \\ []) do
     line_delimiter = Keyword.get(opts, :line, "\n")
     column_delimiter = Keyword.get(opts, :column, nil)
     to_fn = Keyword.get(opts, :to, nil) |> Helpers.to_fn
@@ -788,12 +790,12 @@ end
 
 defmodule Writer do
 
-  def to_file(data, filename, opts \\ []) do
-    data = data |> to_string(opts)
+  def file(data, filename, opts \\ []) do
+    data = data |> string(opts)
     File.write!(filename, data)
   end
 
-  def to_string(data, opts \\ []) do
+  def string(data, opts \\ []) do
     line_joiner = Keyword.get(opts, :line, "\n")
     column_joiner = Keyword.get(opts, :column, ",")
     data
@@ -831,6 +833,8 @@ defmodule DataStructures do
       alias Queue, as: Q
       alias Graph, as: Gr
       alias GeneralAlgorithms, as: Algos
+      alias Reader, as: In
+      alias Writer, as: Out
     end
   end
 end

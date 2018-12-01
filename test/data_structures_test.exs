@@ -482,14 +482,14 @@ defmodule DataStructuresTest do
     4,5,6
     7,8,9
     """
-    assert Reader.from_string(string, column: ",") === [
+    assert In.string(string, column: ",") === [
       ["1", "2", "3"],
       ["4", "5", "6"],
       ["7", "8", "9"]
     ]
-    assert Reader.from_string(string) === ["1,2,3", "4,5,6", "7,8,9"]
+    assert In.string(string) === ["1,2,3", "4,5,6", "7,8,9"]
     string = "1#2#3;4#5#6;7#8#9;"
-    assert Reader.from_string(string, line: ";", column: "#") === [
+    assert In.string(string, line: ";", column: "#") === [
       ["1", "2", "3"],
       ["4", "5", "6"],
       ["7", "8", "9"]
@@ -499,19 +499,19 @@ defmodule DataStructuresTest do
     2
     3
     """
-    assert Reader.from_string(string, to: :i) === [1, 2, 3]
-    assert Reader.from_string(string, to: :f) === [1.0, 2.0, 3.0]
+    assert In.string(string, to: :i) === [1, 2, 3]
+    assert In.string(string, to: :f) === [1.0, 2.0, 3.0]
   end
 
   test "writer" do
     data = [[1,2],[3,4],[5,6]]
-    assert Writer.to_string(data) === "1,2\n3,4\n5,6"
-    assert Writer.to_string(data, line: "@", column: "!") === "1!2@3!4@5!6"
+    assert Out.string(data) === "1,2\n3,4\n5,6"
+    assert Out.string(data, line: "@", column: "!") === "1!2@3!4@5!6"
   end
 
   test "big reader" do
     {:ok, string} = StringIO.open("a,b,c\nd,e\nf,g,h,i")
-    assert Reader.reduce_big_device(string, {}, fn x, acc -> Tuple.append(acc, x) end) === {
+    assert In.reduce_big_device(string, {}, fn x, acc -> Tuple.append(acc, x) end) === {
       ["a", "b", "c"], ["d", "e"], ["f", "g", "h", "i"]
     }
   end

@@ -1,6 +1,6 @@
 # ContestHelpers
 
-**TODO: Add description**
+A library to make coding for contests easier.
 
 ## Installation
 
@@ -10,7 +10,7 @@ by adding `contest_helpers` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:contest_helpers, "~> 0.1.0"}
+    {:contest_helpers, git: "https://github.com/Szetty/contest_helpers", tag: "master"},
   ]
 end
 ```
