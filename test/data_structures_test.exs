@@ -2,6 +2,15 @@ defmodule DataStructuresTest do
   use ExUnit.Case
   use DataStructures
 
+  test "levenhstein" do
+    assert levenhstein("s", "s") === 0
+    assert levenhstein("s", "k") === 1
+    assert levenhstein("ss", "ss") === 0
+    assert levenhstein("sk", "sj") === 1
+    assert levenhstein("kitten", "sitten") === 1
+    assert levenhstein("kitten", "sitting") === 3
+  end
+
   test "array" do
     array = [1, 2, 3] |> A.new
     assert len(array) === 3

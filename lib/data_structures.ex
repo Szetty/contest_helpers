@@ -1,3 +1,54 @@
+defmodule G do
+  @process_name :global_variables
+
+  def start() do
+    {:ok, pid} = Agent.start(fn -> %{} end)
+    true = Process.register(pid, @process_name)
+  end
+
+  def stop() do
+    if registered?() do
+      Agent.stop(@process_name)
+    end
+  end
+
+  def get(key) do
+    if registered?() do
+      Agent.get(@process_name, fn %{} = map -> Map.get(map, key) end)
+    else
+      nil
+    end
+  end
+
+  def get_and_update(key, fun) do
+    if registered?() do
+      Agent.get_and_update(@process_name, fn %{} = map ->
+        old_value = Map.get(map, key)
+        new_value = fun.(old_value)
+        {old_value, Map.put(map, key, new_value)}
+      end)
+    else
+      nil
+    end
+  end
+
+  def set(key, value) do
+    if !registered?() do
+      G.start()
+    end
+    Agent.update(@process_name, fn %{} = map -> Map.put(map, key, value) end)
+  end
+
+  def set_p(key, value) do
+    if !registered?() do
+      G.start
+    end
+    Agent.cast(@process_name, fn %{} = map -> Map.put(map, key, value) end)
+  end
+
+  defp registered?(), do: Enum.member?(Process.registered(), @process_name)
+end
+
 defmodule Helpers do
   import :math
 
@@ -53,63 +104,40 @@ defmodule Helpers do
 
   def p(any), do: IO.puts(inspect(any))
 
+  def levenhstein(string1, string2) do
+    G.set(:distances, %{})
+    distance = do_levenhstein(string1 |> String.codepoints, string2 |> String.codepoints)
+    G.stop()
+    distance
+  end
+
   defp internal_mean(enumerable), do: enumerable |> Enum.sum |> Kernel./(Enum.count(enumerable))
 
   defp parse_float(x) do
     {f, ""} = Float.parse(x)
     f
   end
-end
 
-defmodule G do
-  @process_name :global_variables
-
-  def start() do
-    {:ok, pid} = Agent.start(fn -> %{} end)
-    true = Process.register(pid, @process_name)
-  end
-
-  def stop() do
-    if registered?() do
-      Agent.stop(@process_name)
+  defp do_levenhstein([], s), do: len(s)
+  defp do_levenhstein(s, []), do: len(s)
+  defp do_levenhstein([c1 | s1] = str1, [c2 | s2] = str2) do
+    case G.get(:distances)[{str1, str2}] do
+      nil ->
+        cost = if c1 === c2, do: 0, else: 1
+        distance = Enum.min(
+          [
+            do_levenhstein(s1, str2) + 1,
+            do_levenhstein(str1, s2) + 1,
+            do_levenhstein(s1, s2) + cost
+          ]
+        )
+        G.get_and_update(:distances, fn %{} = map ->
+          Map.put(map, {str1, str2}, distance)
+        end)
+        distance
+      value -> value
     end
   end
-
-  def get(key) do
-    if registered?() do
-      Agent.get(@process_name, fn %{} = map -> Map.get(map, key) end)
-    else
-      nil
-    end
-  end
-
-  def get_and_update(key, fun) do
-    if registered?() do
-      Agent.get_and_update(@process_name, fn %{} = map ->
-        old_value = Map.get(map, key)
-        new_value = fun.(old_value)
-        {old_value, Map.put(map, key, new_value)}
-      end)
-    else
-      nil
-    end
-  end
-
-  def set(key, value) do
-    if !registered?() do
-      G.start()
-    end
-    Agent.update(@process_name, fn %{} = map -> Map.put(map, key, value) end)
-  end
-
-  def set_p(key, value) do
-    if !registered?() do
-      G.start
-    end
-    Agent.cast(@process_name, fn %{} = map -> Map.put(map, key, value) end)
-  end
-
-  defp registered?(), do: Enum.member?(Process.registered(), @process_name)
 end
 
 defmodule Array do
