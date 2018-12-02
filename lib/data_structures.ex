@@ -111,6 +111,8 @@ defmodule Helpers do
     distance
   end
 
+  def exit(), do: System.halt(0)
+
   defp internal_mean(enumerable), do: enumerable |> Enum.sum |> Kernel./(Enum.count(enumerable))
 
   defp parse_float(x) do
@@ -863,6 +865,8 @@ defmodule DataStructures do
       alias GeneralAlgorithms, as: Algos
       alias Reader, as: In
       alias Writer, as: Out
+      alias String, as: Str
+      alias Keyword, as: KW
     end
   end
 end
