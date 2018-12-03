@@ -149,7 +149,7 @@ defmodule Array do
   defstruct value: :array.new([{:default, nil}])
 
   def new() do
-    %__MODULE__{}
+    %Array{}
   end
 
   def new(list) when is_list(list) do
@@ -174,54 +174,89 @@ defmodule Array do
   end
 
   @impl Access
-  def fetch(%__MODULE__{value: value}, key), do: do_get(value, key)
+  def fetch(%Array{value: value}, key), do: {:ok, do_get(value, key)}
 
   @impl Access
   def get(struct, key, default \\ nil), do: fetch(struct, key) || default
 
   @impl Access
-  def get_and_update(%__MODULE__{value: value}, key, fun) when is_function(fun, 1) do
-    {:ok, current} = do_get(value, key)
-
-    case fun.(current) do
-      {get, update} ->
-        {get, %__MODULE__{value: do_update(value, key, update)}}
-
-      :pop ->
-        {current, %__MODULE__{value: do_remove(value, key)}}
-
-      other ->
-        raise "the given function must return a two-element tuple or :pop, got: #{inspect(other)}"
-    end
+  def get_and_update(%Array{value: value}, key, fun) when is_function(fun, 1) do
+    {do_get(value, key), %Array{value: do_update(value, key, fun) |> :array.resize}}
   end
 
   @impl Access
-  def pop(%__MODULE__{value: value}, key, default \\ nil) do
-    {:ok, val} =  do_get(value, key)
-    {val || default, %__MODULE__{value: do_remove(value, key)}}
+  def pop(%Array{value: value}, key, default \\ nil) do
+    val = do_get(value, key)
+    {val || default, %Array{value: do_update(value, key, fn _ -> :pop end) |> :array.resize}}
+  end
+
+  defmacro a <~ b do
+    quote do
+      put_in unquote(a), unquote(b)
+    end
   end
 
   defp do_get(array, key) do
-    cond do
-      is_integer(key) -> {:ok, internal_get(array, key)}
-      _left.._right = key -> {:ok, Enum.map(key, &internal_get(array, &1))}
-      true -> raise "Invalid index #{key}"
+    case key do
+      {key1, key2} -> do_get2d(array, key1, key2)
+      _left.._right -> Enum.map(key, &internal_get(array, &1))
+      nr when is_integer(nr) -> internal_get(array, nr)
+      _ -> raise "Invalid index #{key}"
+    end
+  end
+
+  defp do_update(array, key, update_fun) do
+    case key do
+      {key1, key2} -> do_update2d(array, key1, key2, update_fun)
+      _left.._right -> Enum.reduce(key, array, &do_update_or_remove(&2, &1, update_fun))
+      nr when is_integer(nr) -> do_update_or_remove(array, nr, update_fun)
+      _ -> raise "Invalid index #{key}"
+    end
+  end
+
+  defp do_get2d(array, key1, key2) do
+    case do_get(array, key1) do
+      %Array{value: value} -> do_get(value, key2)
+      list when is_list(list) ->
+        Enum.map(list, fn %Array{value: value} -> do_get(value, key2) end)
+        |> List.flatten
+      _ -> raise "Invalid index #{key1}"
+    end
+  end
+
+  defp do_update2d(array, key1, key2, update_fun) do
+    case do_get(array, key1) do
+      %Array{value: value} ->
+        nested_array = do_update(value, key2, update_fun)
+        internal_update(array, key1, nested_array)
+      list when is_list(list) ->
+        Enum.map(list, fn %Array{value: value} ->
+          do_update(value, key2, update_fun)
+        end)
+        |> Enum.zip(key1)
+        |> Enum.reduce(array, fn {value, key}, acc -> internal_update(acc, key, %Array{value: value}) end)
+      _ -> raise "Invalid index #{key1}"
     end
   end
 
   defp internal_get(array, key) do
     try do
-     :array.get(key, array)
+      :array.get(key, array)
     rescue
-      ArgumentError -> raise "Index out of bounds, with index #{key}"
+      ArgumentError -> raise "Index out of bounds, with index #{inspect(key)}"
     end
   end
 
-  defp do_update(array, key, value) do
-    cond do
-      is_integer(key) -> internal_update(array, key, value)
-      _left.._right = key -> Enum.reduce(key, array, &internal_update(&2, &1, value))
-      true -> raise "Invalid index #{key}"
+  defp do_update_or_remove(array, key, update_fun) do
+    case internal_get(array, key) |> update_fun.() do
+      {_get, update} ->
+        internal_update(array, key, update)
+
+      :pop ->
+        internal_remove(array, key)
+
+      other ->
+        raise "the given function must return a two-element tuple or :pop, got: #{inspect(other)}"
     end
   end
 
@@ -233,25 +268,11 @@ defmodule Array do
     end
   end
 
-  defp do_remove(array, key) do
-    cond do
-      is_integer(key) -> internal_remove(array, key) |> :array.resize
-      _left.._right = key -> Enum.reduce(key, array, &internal_remove(array, &1)) |> :array.resize
-      true -> raise "Invalid index #{key}"
-    end
-  end
-
   defp internal_remove(array, key) do
     try do
       :array.reset(key, array)
     rescue
       ArgumentError -> raise "Index out of bounds, with index #{key}"
-    end
-  end
-
-  defmacro a <~ b do
-    quote do
-      put_in unquote(a), unquote(b)
     end
   end
 
