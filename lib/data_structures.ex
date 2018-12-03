@@ -181,13 +181,13 @@ defmodule Array do
 
   @impl Access
   def get_and_update(%Array{value: value}, key, fun) when is_function(fun, 1) do
-    {do_get(value, key), %Array{value: do_update(value, key, fun) |> :array.resize}}
+    {do_get(value, key), %Array{value: do_update(value, key, fun) |> resize_if_not_fixed}}
   end
 
   @impl Access
   def pop(%Array{value: value}, key, default \\ nil) do
     val = do_get(value, key)
-    {val || default, %Array{value: do_update(value, key, fn _ -> :pop end) |> :array.resize}}
+    {val || default, %Array{value: do_update(value, key, fn _ -> :pop end) |> resize_if_not_fixed}}
   end
 
   defmacro a <~ b do
@@ -273,6 +273,14 @@ defmodule Array do
       :array.reset(key, array)
     rescue
       ArgumentError -> raise "Index out of bounds, with index #{key}"
+    end
+  end
+
+  defp resize_if_not_fixed(array) do
+    if :array.is_fix(array) do
+      array
+    else
+      :array.resize(array)
     end
   end
 
