@@ -931,7 +931,7 @@ defmodule DataStructures do
     quote do
       import Helpers
       import :math
-      import Enum, except: [count: 2, empty?: 1]
+      import Enum, except: [empty?: 1]
       import Array, only: :macros
       alias Array, as: A
       alias BinTree, as: BT
