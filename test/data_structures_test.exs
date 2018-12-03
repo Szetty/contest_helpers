@@ -2,6 +2,18 @@ defmodule DataStructuresTest do
   use ExUnit.Case
   use DataStructures
 
+  defmacrop assert_error(message, do: block) do
+    quote do
+      try do
+        unquote(block)
+      rescue
+        e in RuntimeError -> assert e.message === unquote(message)
+      else
+        _ -> assert false
+      end
+    end
+  end
+
   test "levenhstein" do
     assert levenhstein("s", "s") === 0
     assert levenhstein("s", "k") === 1
@@ -49,6 +61,21 @@ defmodule DataStructuresTest do
     assert array[2][0] === 7
     assert array[2][1] === 8
     assert array[2][2] === 9
+  end
+
+  test "fixed array" do
+    array = A.new(10, 0)
+    assert array[0] === 0
+    assert array[9] === 0
+    assert_error "Index out of bounds, with index 10", do: array[10]
+  end
+
+  test "fixed 2d array" do
+    array = A.new2d(2, 2, :a)
+    assert array[0][0] === :a
+    assert array[1][1] === :a
+    assert_error "Index out of bounds, with index 2", do: array[2]
+    assert_error "Index out of bounds, with index 3", do: array[1][3]
   end
 
   test "heap" do
@@ -127,13 +154,7 @@ defmodule DataStructuresTest do
 
   test "binary tree" do
     assert ~t{1 (2 (3 5) 6) 4}b === %BT{elements: [1, [2, [3, 5], 6], 4]}
-    try do
-      ~t{1 (2 3 5 6 7)}b
-    rescue
-      e in RuntimeError -> assert e.message === "Not a binary tree"
-    else
-      _ -> assert false
-    end
+    assert_error "Not a binary tree", do: ~t{1 (2 3 5 6 7)}b
 
     tree = ~t{1 () (2 () (5 (3 () 4) 6))}b
     assert BT.preorder(tree) === [1, 2, 5, 3, 4, 6]
@@ -149,13 +170,7 @@ defmodule DataStructuresTest do
     stack = St.new()
     assert empty?(stack)
     assert St.peek(stack) === nil
-    try do
-      St.pop(stack)
-    rescue
-      e in RuntimeError -> assert e.message === "Stack is empty!"
-    else
-      _ -> assert false
-    end
+    assert_error "Stack is empty!", do: St.pop(stack)
     stack = St.push(stack, 1)
     assert St.peek(stack) === 1
     {1, stack} = St.pop(stack)
@@ -171,13 +186,7 @@ defmodule DataStructuresTest do
     {4, queue} = Q.dequeue(queue)
     assert Q.peek(queue) === nil
     assert empty?(queue) === true
-    try do
-      Q.dequeue(queue)
-    rescue
-      e in RuntimeError -> assert e.message === "Queue is empty!"
-    else
-      _ -> assert false
-    end
+    assert_error "Queue is empty!", do: Q.dequeue(queue)
     queue =
       %Queue{resize_limit: 7}
       |> Q.enqueue(1)
@@ -289,13 +298,7 @@ defmodule DataStructuresTest do
     assert Gr.edges_no(graph) === 1
     assert Gr.get_edge(graph, 1) === false
     assert Gr.get_edge(graph, 2) === {2, 1, 3, 2}
-    try do
-      Gr.edge(graph, 5, {1, 3}, nil)
-    rescue
-      e in RuntimeError -> assert e.message === "There is already an edge from 1 and to 3"
-    else
-      _ -> assert false
-    end
+    assert_error "There is already an edge from 1 and to 3", do: Gr.edge(graph, 5, {1, 3}, nil)
   end
 
   test "cyclic graph" do

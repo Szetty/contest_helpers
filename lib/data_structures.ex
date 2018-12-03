@@ -163,6 +163,16 @@ defmodule Array do
     end)
   end
 
+  def new(size, default \\ nil) when is_integer(size) do
+    %Array{value: :array.new([{:size, size}, {:fixed, true}, {:default, default}])}
+  end
+
+  def new2d(size_x, size_y, default \\ nil) when is_integer(size_x) and is_integer(size_y) do
+    inner_array = %Array{value: :array.new([{:size, size_y}, {:fixed, true}, {:default, default}])}
+    outer_array = :array.new([{:size, size_x}, {:fixed, true}, {:default, inner_array}])
+    %Array{value: outer_array}
+  end
+
   @impl Access
   def fetch(%__MODULE__{value: value}, key), do: internal_get(value, key)
 
@@ -195,7 +205,11 @@ defmodule Array do
   end
 
   defp internal_get(array, key) do
-    {:ok, :array.get(key, array)}
+    try do
+      {:ok, :array.get(key, array)}
+    rescue
+      ArgumentError -> raise "Index out of bounds, with index #{key}"
+    end
   end
 
   defmacro a <~ b do
