@@ -174,21 +174,21 @@ defmodule Array do
   end
 
   @impl Access
-  def fetch(%__MODULE__{value: value}, key), do: internal_get(value, key)
+  def fetch(%__MODULE__{value: value}, key), do: do_get(value, key)
 
   @impl Access
   def get(struct, key, default \\ nil), do: fetch(struct, key) || default
 
   @impl Access
   def get_and_update(%__MODULE__{value: value}, key, fun) when is_function(fun, 1) do
-    {:ok, current} = internal_get(value, key)
+    {:ok, current} = do_get(value, key)
 
     case fun.(current) do
       {get, update} ->
-        {get, %__MODULE__{value: :array.set(key, update, value)}}
+        {get, %__MODULE__{value: do_update(value, key, update)}}
 
       :pop ->
-        {current, %__MODULE__{value: :array.reset(key, value) |> :array.resize()}}
+        {current, %__MODULE__{value: do_remove(value, key)}}
 
       other ->
         raise "the given function must return a two-element tuple or :pop, got: #{inspect(other)}"
@@ -197,16 +197,53 @@ defmodule Array do
 
   @impl Access
   def pop(%__MODULE__{value: value}, key, default \\ nil) do
-    {:ok, val} =  internal_get(value, key) || default
-    array =
-      :array.reset(key, value)
-      |> :array.resize
-    {val, %__MODULE__{value: array}}
+    {:ok, val} =  do_get(value, key)
+    {val || default, %__MODULE__{value: do_remove(value, key)}}
+  end
+
+  defp do_get(array, key) do
+    cond do
+      is_integer(key) -> {:ok, internal_get(array, key)}
+      _left.._right = key -> {:ok, Enum.map(key, &internal_get(array, &1))}
+      true -> raise "Invalid index #{key}"
+    end
   end
 
   defp internal_get(array, key) do
     try do
-      {:ok, :array.get(key, array)}
+     :array.get(key, array)
+    rescue
+      ArgumentError -> raise "Index out of bounds, with index #{key}"
+    end
+  end
+
+  defp do_update(array, key, value) do
+    cond do
+      is_integer(key) -> internal_update(array, key, value)
+      _left.._right = key -> Enum.reduce(key, array, &internal_update(&2, &1, value))
+      true -> raise "Invalid index #{key}"
+    end
+  end
+
+  defp internal_update(array, key, value) do
+    try do
+      :array.set(key, value, array)
+    rescue
+      ArgumentError -> raise "Index out of bounds, with index #{key}"
+    end
+  end
+
+  defp do_remove(array, key) do
+    cond do
+      is_integer(key) -> internal_remove(array, key) |> :array.resize
+      _left.._right = key -> Enum.reduce(key, array, &internal_remove(array, &1)) |> :array.resize
+      true -> raise "Invalid index #{key}"
+    end
+  end
+
+  defp internal_remove(array, key) do
+    try do
+      :array.reset(key, array)
     rescue
       ArgumentError -> raise "Index out of bounds, with index #{key}"
     end

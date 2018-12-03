@@ -43,6 +43,10 @@ defmodule DataStructuresTest do
     {7, array} = pop_in(array[2])
     assert len(array) === 2
     assert array[2] === nil
+
+    assert array[0..2] === [1, 4, nil]
+    array = put_in array[0..1], 2
+    assert array[0..1] === [2, 2]
   end
 
   test "multi-dimensional array" do
@@ -61,6 +65,8 @@ defmodule DataStructuresTest do
     assert array[2][0] === 7
     assert array[2][1] === 8
     assert array[2][2] === 9
+    array = put_in array[2][2], 10
+    assert array[2][2] === 10
   end
 
   test "fixed array" do
