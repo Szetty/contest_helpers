@@ -23,6 +23,21 @@ defmodule DataStructuresTest do
     assert factorial.(2) === 2
     assert factorial.(3) === 6
     assert factorial.(5) === 120
+
+    remove_dup = rec fn
+      [] -> []
+      [_] = l -> l
+      [h1, h2 | t] ->
+        if h1 === h2 do
+          f.(t)
+        else
+          [h1 | f.([h2 | t])]
+        end
+    end
+
+    assert remove_dup.([1, 1, 2, 3]) === [2, 3]
+    assert remove_dup.([3, 3, 1]) === [1]
+    assert remove_dup.([1, 2, 3]) === [1, 2, 3]
   end
 
   test "levenhstein" do

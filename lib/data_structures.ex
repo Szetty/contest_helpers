@@ -127,10 +127,20 @@ defmodule Helpers do
   end
 
   defp replace_with_call_to_global(ast, value, key) do
+    recursive_call = &(replace_with_call_to_global(&1, value, key))
     case ast do
-      {^value, _, _} -> {{:., [], [{:__aliases__, [alias: false], [:G]}, :get]}, [], [key]}
-      {op, context, parameters} when is_tuple(op) and is_list(parameters) -> {replace_with_call_to_global(op, value, key), context, Enum.map(parameters, &(replace_with_call_to_global(&1, value, key)))}
-      {op, context, parameters} when is_list(parameters) -> {op, context, Enum.map(parameters, &(replace_with_call_to_global(&1, value, key)))}
+      {^value, _, _} ->
+        {{:., [], [{:__aliases__, [alias: false], [:G]}, :get]}, [], [key]}
+      {op, context, parameters} when is_tuple(op) and is_list(parameters) ->
+        {replace_with_call_to_global(op, value, key), context, Enum.map(parameters, &(replace_with_call_to_global(&1, value, key)))}
+      {op, context, parameters} when is_list(parameters) ->
+        {op, context, Enum.map(parameters, recursive_call)}
+      {k, val} when is_list(val) ->
+        {k, Enum.map(val, recursive_call)}
+      {k, val} when is_tuple(val) ->
+        {k, replace_with_call_to_global(val, value, key)}
+      l when is_list(l) ->
+        Enum.map(l, recursive_call)
       x -> x
     end
   end
