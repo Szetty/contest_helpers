@@ -113,6 +113,28 @@ defmodule Helpers do
 
   def exit(), do: System.halt(0)
 
+  defmacro rec(fun, value \\ :f) do
+    key = :os.system_time(:millisecond)
+    fun_ast =
+    (quote do
+      unquote(fun)
+    end)
+    |> replace_with_call_to_global(value, key)
+    quote do
+      G.set(unquote(key), unquote(fun_ast))
+      unquote(fun_ast)
+    end
+  end
+
+  defp replace_with_call_to_global(ast, value, key) do
+    case ast do
+      {^value, _, _} -> {{:., [], [{:__aliases__, [alias: false], [:G]}, :get]}, [], [key]}
+      {op, context, parameters} when is_tuple(op) and is_list(parameters) -> {replace_with_call_to_global(op, value, key), context, Enum.map(parameters, &(replace_with_call_to_global(&1, value, key)))}
+      {op, context, parameters} when is_list(parameters) -> {op, context, Enum.map(parameters, &(replace_with_call_to_global(&1, value, key)))}
+      x -> x
+    end
+  end
+
   defp internal_mean(enumerable), do: enumerable |> Enum.sum |> Kernel./(Enum.count(enumerable))
 
   defp parse_float(x) do

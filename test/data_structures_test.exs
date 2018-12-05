@@ -14,6 +14,17 @@ defmodule DataStructuresTest do
     end
   end
 
+  test "recursive anonymous function" do
+    factorial = rec fn
+      0 -> 1
+      1 -> 1
+      n -> n * f.(n - 1)
+    end
+    assert factorial.(2) === 2
+    assert factorial.(3) === 6
+    assert factorial.(5) === 120
+  end
+
   test "levenhstein" do
     assert levenhstein("s", "s") === 0
     assert levenhstein("s", "k") === 1
