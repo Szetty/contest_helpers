@@ -14,41 +14,6 @@ defmodule DataStructuresTest do
     end
   end
 
-  test "recursive anonymous function" do
-    factorial = rec fn
-      0 -> 1
-      1 -> 1
-      n -> n * f.(n - 1)
-    end
-    assert factorial.(2) === 2
-    assert factorial.(3) === 6
-    assert factorial.(5) === 120
-
-    remove_dup = rec fn
-      [] -> []
-      [_] = l -> l
-      [h1, h2 | t] ->
-        if h1 === h2 do
-          f.(t)
-        else
-          [h1 | f.([h2 | t])]
-        end
-    end
-
-    assert remove_dup.([1, 1, 2, 3]) === [2, 3]
-    assert remove_dup.([3, 3, 1]) === [1]
-    assert remove_dup.([1, 2, 3]) === [1, 2, 3]
-  end
-
-  test "levenhstein" do
-    assert levenhstein("s", "s") === 0
-    assert levenhstein("s", "k") === 1
-    assert levenhstein("ss", "ss") === 0
-    assert levenhstein("sk", "sj") === 1
-    assert levenhstein("kitten", "sitten") === 1
-    assert levenhstein("kitten", "sitting") === 3
-  end
-
   test "array" do
     array = [1, 2, 3] |> A.new
     assert len(array) === 3
@@ -69,8 +34,11 @@ defmodule DataStructuresTest do
     {7, array} = pop_in(array[2])
     assert len(array) === 2
     assert array[2] === nil
-
     assert array[0..2] === [1, 4, nil]
+
+    array = A.swap(array, 0, 1)
+    assert array[0..2] === [4, 1, nil]
+
     array = put_in array[0..1], 2
     assert array[0..1] === [2, 2]
   end
