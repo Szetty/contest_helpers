@@ -2,7 +2,7 @@ defmodule Helpers do
   import :math
   import Array
 
-  def p(any, limit \\ 100), do: IO.puts(inspect(any), limit: limit)
+  def p(any, limit \\ 100), do: IO.puts(inspect(any, limit: limit))
   def identity, do: fn x -> x end
   def exit(), do: System.halt(0)
 
