@@ -7,7 +7,10 @@ defmodule Graph do
   def new(vertices, edges) do
     graph = Graph.new()
     vertices
-    |> Enum.each(fn vertex -> vertex(graph, vertex) end)
+    |> Enum.each(fn
+      {vertex, label} -> vertex(graph, vertex, label)
+      vertex -> vertex(graph, vertex)
+    end)
     edges
     |> Enum.with_index()
     |> Enum.each(fn
@@ -66,11 +69,46 @@ defmodule Graph do
     {next, remaining} =
       graph
       |> get_vertices
+      |> Enum.map(fn
+        v when is_tuple(v) -> elem(v, 0)
+        v -> v
+      end)
       |> Enum.split_with(fn v ->
       (graph |> in_edges(v) |> Enum.count) === 0
     end)
     next_nodes = Enum.reduce(next, Heap.new(fun), &(Heap.push(&2, &1)))
     topo_sort(graph, next_nodes, MapSet.new, remaining, [])
+  end
+
+  def critical_path(%Graph{} = graph) do
+    order = topological_sort(graph)
+    [first | rest] = order
+    {_, duration} = get_vertex(graph, first)
+    es = %{} |> Map.put(first, duration)
+    es = Enum.reduce(rest, es, fn node, acc ->
+      {_, duration} = get_vertex(graph, node)
+      time =
+        in_neighbours(graph, node)
+        |> Enum.map(&Map.get(acc, &1))
+        |> Enum.max
+      Map.put(acc, node, time + duration)
+    end)
+
+    [last | rest] = Enum.reverse(order)
+    {_, duration} = get_vertex(graph, last)
+    ls = %{} |> Map.put(last, Map.get(es, last) - duration)
+    ls = Enum.reduce(rest, ls, fn node, acc ->
+      {_, duration} = get_vertex(graph, node)
+      time =
+        out_neighbours(graph, node)
+        |> Enum.map(&Map.get(acc, &1))
+        |> Enum.min
+      Map.put(acc, node, time - duration)
+    end)
+    Enum.filter(order, fn node ->
+      {_, duration} = get_vertex(graph, node)
+      Map.get(es, node) === Map.get(ls, node) + duration
+    end)
   end
 
   def dfs(%Graph{} = graph, vertex_id) do

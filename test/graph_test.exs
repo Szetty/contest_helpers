@@ -246,4 +246,18 @@ defmodule GraphTest do
     assert Gr.topological_sort(graph, fn a, b -> a > b end) === [:c, :f, :a, :d, :b, :e]
   end
 
+  test "critical path" do
+    graph = Gr.new(
+      [{:a, 3}, {:b, 4}, {:c, 2}, {:d, 5}, {:e, 1}, {:f, 2}, {:g, 4}, {:h, 3}],
+      [
+        {:a, :b}, {:a, :c},
+        {:b, :d},
+        {:c, :e}, {:c, :f},
+        {:d, :g}, {:e, :g},
+        {:f, :h}, {:g, :h}
+      ]
+    )
+    assert Gr.critical_path(graph) === [:a, :b, :d, :g, :h]
+  end
+
 end
