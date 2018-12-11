@@ -62,7 +62,16 @@ defmodule Graph do
     graph
   end
 
-  def topological_sort(%Graph{value: value}), do: :digraph_utils.topsort(value)
+  def topological_sort(%Graph{} = graph, fun \\ &Kernel.</2) do
+    {next, remaining} =
+      graph
+      |> get_vertices
+      |> Enum.split_with(fn v ->
+      (graph |> in_edges(v) |> Enum.count) === 0
+    end)
+    next_nodes = Enum.reduce(next, Heap.new(fun), &(Heap.push(&2, &1)))
+    topo_sort(graph, next_nodes, MapSet.new, remaining, [])
+  end
 
   def dfs(%Graph{} = graph, vertex_id) do
     stack = Stack.new() |> Stack.push(vertex_id)
@@ -109,6 +118,22 @@ defmodule Graph do
         end)
       end)
     end)
+  end
+
+  defp topo_sort(graph, next_nodes, visited, vertices_remaining, list) do
+    if Heap.size(next_nodes) === 0 do
+      list
+    else
+      {next_nodes, node} = Heap.pop(next_nodes)
+      list = list ++ [node]
+      visited = out_edges(graph, node) |> MapSet.new |> MapSet.union(visited)
+      {next, remaining} =
+        Enum.split_with(vertices_remaining, fn v ->
+          in_edges(graph, v) |> MapSet.new |> MapSet.subset?(visited)
+        end)
+      next_nodes = Enum.reduce(next, next_nodes, &(Heap.push(&2, &1)))
+      topo_sort(graph, next_nodes, visited, remaining, list)
+    end
   end
 
   defp do_dfs(%Stack{elements: []}, vertices, _discovered), do: vertices
