@@ -5,6 +5,7 @@ defmodule Helpers do
   def p(any, limit \\ 100), do: IO.puts(inspect(any, limit: limit))
   def identity, do: fn x -> x end
   def exit(), do: System.halt(0)
+  def range2d(r1, r2), do: (for x <- r1, do: for y <- r2, do: {x, y}) |> List.flatten
 
   def len(container) do
     case Enumerable.impl_for(container) do

@@ -72,4 +72,10 @@ defmodule HelpersTest do
     assert to_f(false) === 0.0
   end
 
+  test "range2d" do
+    assert range2d(1..1, 1..1) === [{1, 1}]
+    assert range2d(1..3, 1..2) === [{1, 1}, {1, 2}, {2, 1}, {2, 2}, {3, 1}, {3, 2}]
+    assert range2d(0..-1, 0..-1) === [{0, 0}, {0, -1}, {-1, 0}, {-1, -1}]
+  end
+
 end
