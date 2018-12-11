@@ -52,6 +52,23 @@ defmodule Array do
     |> put_in([idx2], array[idx1])
   end
 
+  def to_list(%Array{value: value}) do
+    case value do
+      {:array, _size, 0, _default, _elements} ->
+        f = fn
+          _idx, %Array{} = el, acc -> [to_list(el) | acc]
+          _idx, el, acc -> [el | acc]
+        end
+        :array.foldr(f, [], value)
+      {:array, size, _capacity, _default, elements} when is_tuple(elements) ->
+        elements |> Tuple.to_list |> Enum.take(size) |> Enum.map(fn
+          %Array{} = el -> to_list(el)
+          el -> el
+        end)
+      {:array, _size, _capacity, _default, _elements} -> []
+    end
+  end
+
   defmacro a <~ b do
     quote do
       put_in unquote(a), unquote(b)

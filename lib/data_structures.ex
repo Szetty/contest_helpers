@@ -49,39 +49,6 @@ defmodule G do
   defp registered?(), do: Enum.member?(Process.registered(), @process_name)
 end
 
-defmodule GeneralAlgorithms do
-
-  def backtrack(data, accept_fn, reject_fn) do
-    G.set(:accept, accept_fn)
-    G.set(:reject, reject_fn)
-    G.set(:data, data)
-    solutions = do_backtrack([]) |> Enum.map(&Kernel.elem(&1, 0))
-    G.stop()
-    solutions
-  end
-
-  defp do_backtrack(solution) do
-    continue_backtrack_fn = fn fun ->
-      G.get(:data)
-      |> fun.(fn element ->
-        do_backtrack(solution ++ [element])
-      end)
-      |> List.flatten
-    end
-    cond do
-      solution === [] ->
-        continue_backtrack_fn.(&Parallel.map/2)
-      G.get(:reject).(solution) ->
-        []
-      G.get(:accept).(solution) ->
-        {solution}
-      true ->
-        continue_backtrack_fn.(&Enum.map/2)
-    end
-  end
-
-end
-
 defmodule Parallel do
 
   def map(collection, func, max_concurrency \\ 8) do
@@ -183,7 +150,7 @@ defmodule DataStructures do
       alias Stack, as: St
       alias Queue, as: Q
       alias Graph, as: Gr
-      alias GeneralAlgorithms, as: Algos
+      alias Algorithms.General, as: Algos
       alias Reader, as: In
       alias Writer, as: Out
       alias String, as: Str

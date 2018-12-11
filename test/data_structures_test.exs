@@ -1,88 +1,7 @@
 defmodule DataStructuresTest do
   use ExUnit.Case
   use DataStructures
-
-  defmacrop assert_error(message, do: block) do
-    quote do
-      try do
-        unquote(block)
-      rescue
-        e in RuntimeError -> assert e.message === unquote(message)
-      else
-        _ -> assert false
-      end
-    end
-  end
-
-  test "array" do
-    array = [1, 2, 3] |> A.new
-    assert len(array) === 3
-    assert array[0] === 1
-    assert array[2] === 3
-    assert array[5] === nil
-
-    array = array[1] <~ 4
-    assert array[1] === 4
-
-    {3, array} = pop_in(array, [2])
-    assert len(array) === 2
-    assert array[2] === nil
-
-    array = array[2] <~ 7
-    assert array[2] === 7
-
-    {7, array} = pop_in(array[2])
-    assert len(array) === 2
-    assert array[2] === nil
-    assert array[0..2] === [1, 4, nil]
-
-    array = A.swap(array, 0, 1)
-    assert array[0..2] === [4, 1, nil]
-
-    array = put_in array[0..1], 2
-    assert array[0..1] === [2, 2]
-  end
-
-  test "multi-dimensional array" do
-    array = [
-      [1, 2, [3, 3.5]],
-      [4, 5, 6],
-      [7, 8, 9]
-    ] |> A.new
-    assert array[0][0] === 1
-    assert array[0][1] === 2
-    assert array[0][2][0] === 3
-    assert array[0][2][1] === 3.5
-    assert array[1][0] === 4
-    assert array[1][1] === 5
-    assert array[1][2] === 6
-    assert array[2][0] === 7
-    assert array[2][1] === 8
-    assert array[2][2] === 9
-    array = put_in array[2][2], 10
-    assert array[2][2] === 10
-    assert array[{0..1, 1}] === [2, 5]
-    assert array[{0..1, 0..1}] === [1, 2, 4, 5]
-    array = update_in array[{0..1, 1}], &(&1 + 1)
-    assert array[{0..1, 1}] === [3, 6]
-    array = update_in array[{0..1, 0..1}], &(&1 + 1)
-    assert array[{0..1, 0..1}] === [2, 4, 5, 7]
-  end
-
-  test "fixed array" do
-    array = A.new(10, 0)
-    assert array[0] === 0
-    assert array[9] === 0
-    assert_error "Index out of bounds, with index 10", do: array[10]
-  end
-
-  test "fixed 2d array" do
-    array = A.new2d(2, 2, :a)
-    assert array[0][0] === :a
-    assert array[1][1] === :a
-    assert_error "Index out of bounds, with index 2", do: array[2]
-    assert_error "Index out of bounds, with index 3", do: array[1][3]
-  end
+  import TestHelpers
 
   test "heap" do
     heap = H.new()
@@ -442,45 +361,6 @@ defmodule DataStructuresTest do
 
     assert Gr.dfs(graph, :A) === [:A, :B, :D, :F, :E, :C, :G]
     assert Gr.bfs(graph, :A) === [:A, :E, :C, :B, :F, :G, :D]
-  end
-
-  test "backtracking" do
-    size = 4
-    solutions = Algos.backtrack(
-      1..size,
-      fn solution ->
-        Enum.count(solution) === size && Enum.uniq(solution) === solution
-      end,
-      fn solution ->
-        Enum.uniq(solution) !== solution
-      end
-    )
-    assert solutions === [
-      [1, 2, 3, 4],
-      [1, 2, 4, 3],
-      [1, 3, 2, 4],
-      [1, 3, 4, 2],
-      [1, 4, 2, 3],
-      [1, 4, 3, 2],
-      [2, 1, 3, 4],
-      [2, 1, 4, 3],
-      [2, 3, 1, 4],
-      [2, 3, 4, 1],
-      [2, 4, 1, 3],
-      [2, 4, 3, 1],
-      [3, 1, 2, 4],
-      [3, 1, 4, 2],
-      [3, 2, 1, 4],
-      [3, 2, 4, 1],
-      [3, 4, 1, 2],
-      [3, 4, 2, 1],
-      [4, 1, 2, 3],
-      [4, 1, 3, 2],
-      [4, 2, 1, 3],
-      [4, 2, 3, 1],
-      [4, 3, 1, 2],
-      [4, 3, 2, 1]
-    ]
   end
 
   test "global" do
