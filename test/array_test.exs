@@ -61,6 +61,9 @@ defmodule ArrayTest do
     assert array[{0..1, 1}] === [3, 6]
     array = update_in array[{0..1, 0..1}], &(&1 + 1)
     assert array[{0..1, 0..1}] === [2, 4, 5, 7]
+
+    assert array[{-1, -1}] === nil
+    assert array[{99, 99}] === nil
   end
 
   test "fixed array" do

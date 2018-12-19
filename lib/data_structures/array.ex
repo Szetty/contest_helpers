@@ -114,7 +114,7 @@ defmodule Array do
       list when is_list(list) ->
         Enum.map(list, fn %Array{value: value} -> do_get(value, key2) end)
         |> List.flatten
-      _ -> raise "Invalid index #{key1}"
+      nil -> nil
     end
   end
 
