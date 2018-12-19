@@ -32,6 +32,9 @@ defmodule ArrayTest do
 
     array = put_in array[0..1], 2
     assert array[0..1] === [2, 2]
+
+    assert array[99] === nil
+    assert array[-50] === nil
   end
 
   test "multi-dimensional array" do
@@ -79,5 +82,27 @@ defmodule ArrayTest do
     assert A.to_list(A.new([1, 7, 9, 2, 5])) === [1, 7, 9, 2, 5]
     assert A.to_list(A.new(3, :l)) === [:l, :l, :l]
     assert A.to_list(A.new2d(2, 2, 0)) === [[0, 0], [0, 0]]
+    assert A.to_list(A.new([{1, 2}, {3, 4}])) === [{1, 2}, {3, 4}]
+    assert A.to_list(A.new([[1, 2], [3, 4]])) === [[1, 2], [3, 4]]
+    grid = Reader.string("..|.#;.|#..;..#..;.||..;.....", line: ";", column: "")
+    assert A.to_list(A.new(grid)) === grid
+  end
+
+  test "map" do
+    a =
+      A.new([1, 2, 3, 4, 5])
+      |> A.map(fn _idx, el -> el * el end)
+      |> A.to_list
+    assert a === [1, 4, 9, 16, 25]
+    a =
+      A.new([[1, 2], [3, [4]], 5])
+      |> A.map_rec(fn _idx, el -> el * el end)
+      |> A.to_list
+    assert a === [[1, 4], [9, [16]], 25]
+    a =
+      A.new([[1, 2], [3, 4], [5, 6]])
+      |> A.map_rec(fn [j, i], _el -> i + 2 * j end)
+      |> A.to_list
+    assert a === [[0, 2], [1, 3], [2, 4]]
   end
 end

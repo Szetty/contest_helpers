@@ -166,6 +166,13 @@ defmodule DataStructuresTest do
     """
     assert In.string(string, to: :i) === [1, 2, 3]
     assert In.string(string, to: :f) === [1.0, 2.0, 3.0]
+    assert In.string("..|.#;.|#..;..#..;.||..;.....", line: ";", column: "") === [
+      [".", ".", "|", ".", "#"],
+      [".", "|", "#", ".", "."],
+      [".", ".", "#", ".", "."],
+      [".", "|", "|", ".", "."],
+      [".", ".", ".", ".", "."]
+    ]
   end
 
   test "writer" do

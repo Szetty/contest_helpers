@@ -69,10 +69,25 @@ defmodule Array do
     end
   end
 
+  def map(%Array{value: value} = array, fun) do
+    %{array | value: :array.map(fun, value)}
+  end
+
+  def map_rec(%Array{} = array, fun) do
+    %{array | value: do_map_rec(array, fun, [])}
+  end
+
   defmacro a <~ b do
     quote do
       put_in unquote(a), unquote(b)
     end
+  end
+
+  defp do_map_rec(%Array{value: value}, fun, indices) do
+    :array.map(fn
+      idx, %Array{} = arr -> %{arr | value: do_map_rec(arr, fun, [idx | indices])}
+      idx, el -> fun.([idx | indices], el)
+    end, value)
   end
 
   defp do_get(array, key) do
@@ -122,7 +137,12 @@ defmodule Array do
     try do
       :array.get(key, array)
     rescue
-      ArgumentError -> raise "Index out of bounds, with index #{inspect(key)}"
+      ArgumentError ->
+        if :array.is_fix(array) do
+          raise "Index out of bounds, with index #{inspect(key)}"
+        else
+          nil
+        end
     end
   end
 

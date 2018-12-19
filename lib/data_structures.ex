@@ -80,7 +80,11 @@ defmodule Reader do
       |> Enum.filter(fn x -> x !== "" end)
     if column_delimiter !== nil do
       lines
-      |> Enum.map(fn line -> String.split(line, column_delimiter) |> to_fn.() end)
+      |> Enum.map(fn line ->
+        String.split(line, column_delimiter)
+        |> Enum.filter(fn x -> x !== "" end)
+        |> to_fn.()
+      end)
     else
       lines
       |> Enum.map(to_fn)
