@@ -121,7 +121,7 @@ defmodule Array do
   defp do_update2d(array, key1, key2, update_fun) do
     case do_get(array, key1) do
       %Array{value: value} ->
-        nested_array = do_update(value, key2, update_fun)
+        nested_array = %Array{value: do_update(value, key2, update_fun)}
         internal_update(array, key1, nested_array)
       list when is_list(list) ->
         Enum.map(list, fn %Array{value: value} ->
@@ -175,7 +175,7 @@ defmodule Array do
     end
   end
 
-  defp resize_if_not_fixed(array) do
+  defp resize_if_not_fixed({:array, _, _, _, _} = array) do
     if :array.is_fix(array) do
       array
     else

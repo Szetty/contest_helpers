@@ -55,6 +55,8 @@ defmodule ArrayTest do
     assert array[2][2] === 9
     array = put_in array[2][2], 10
     assert array[2][2] === 10
+    array = put_in array[{2, 2}], 10
+    assert array[2][2] === 10
     assert array[{0..1, 1}] === [2, 5]
     assert array[{0..1, 0..1}] === [1, 2, 4, 5]
     array = update_in array[{0..1, 1}], &(&1 + 1)
